@@ -1,1 +1,1 @@
-incar_change
+Usage: incar_change.py "tag" "integer"
