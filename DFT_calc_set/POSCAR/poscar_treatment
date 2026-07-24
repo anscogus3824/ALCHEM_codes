@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# POSCAR 처리 시퀀스
+# 1. sort_poscar.py - POSCAR 원자 정렬
+# 2. pot.sh - POTCAR 생성
+# 3. magmom_incar - MAGMOM 설정
+# 4. compatibility - 호환성 검증
+
+set -e  # 에러 발생 시 스크립트 중단
+
+# 현재 디렉토리 확인
+if [[ ! -f "POSCAR" ]]; then
+    echo "❌ 에러: POSCAR 파일이 현재 디렉토리에 없습니다."
+    exit 1
+fi
+
+# 1단계: POSCAR 원자 정렬
+python3 /home/mch3824/bin/DFT/sort_poscar.py > /dev/null 2>&1
+if [[ -f "POSCAR_atom_sorted" ]]; then
+    mv POSCAR_atom_sorted POSCAR
+else
+    echo "❌ POSCAR 정렬 실패"
+    exit 1
+fi
+
+# 2단계: POTCAR 생성
+bash /home/mch3824/bin/DFT/pot.sh > /dev/null 2>&1
+if [[ ! -f "POTCAR" ]]; then
+    echo "❌ POTCAR 생성 실패"
+    exit 1
+fi
+
+# 3단계: MAGMOM 설정
+python3 /home/mch3824/bin/DFT/magmom_incar.py > /dev/null 2>&1
+if [[ ! -f "INCAR" ]] || ! grep -q "MAGMOM" INCAR; then
+    echo "❌ MAGMOM 설정 실패"
+    exit 1
+fi
+
+# 4단계: 호환성 검증
+echo "=== 호환성 검증 결과 ==="
+python3 /home/mch3824/bin/DFT/compatibility
